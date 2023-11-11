@@ -3,13 +3,6 @@
 // Stephen J. Guy <sjguy@umn.edu>
 
 /*
-INTRODUCTION:
-Rather than making an artist control every aspect of a characters animation, we will often specify 
-key points (e.g., center of mass and hand position) and let an optimizer find the right angles for 
-all of the joints in the character's skelton. This is called Inverse Kinematics (IK). Here, we start 
-with some simple IK code and try to improve the results a bit to get better motion.
-
-
 CHALLENGE:
 
 1. Go back to the 3-limb arm, can you make it look more human-like. Try adding a simple body to 
@@ -21,31 +14,30 @@ CHALLENGE:
 
 void setup(){
   size(640,480);
-  surface.setTitle("Inverse Kinematics [CSCI 5611 Example]");
+  root = new Vec2((bodyW/2) + (width/2), (height/2));
+  surface.setTitle("Inverse Kinematics Part 1");
 }
 
 //Root
-Vec2 root = new Vec2(0,0);
-
-// IKChain arm = new IKChain[3];
+Vec2 root;
 
 //Upper Arm
-float l0 = 135; 
+float l0 = 90; 
 float a0 = 0.3; //Shoulder joint
-// arm[2] = new IKChain(l0, a0);
 
 //Lower Arm
-float l1 = 120;
+float l1 = 80;
 float a1 = 0.3; //Elbow joint
-// arm[1] = new IKChain(l1, a1);
 
 //Hand
-float l2 = 75;
+float l2 = 50;
 float a2 = 0.3; //Wrist joint
-// arm[0] = new IKChain(l2, a2);
 
+//Finger
+float l3 = 20;
+float a3 = 0.3; //Finger joint
 
-Vec2 start_l1,start_l2,endPoint;
+Vec2 start_l1,start_l2,start_l3,endPoint;
 
 void solve(){
   Vec2 goal = new Vec2(mouseX, mouseY);
@@ -53,20 +45,22 @@ void solve(){
   Vec2 startToGoal, startToEndEffector;
   float dotProd, angleDiff;
   
-  // //Update the finger joint
-  // startToGoal = goal.minus(start_l3);
-  // startToEndEffector = endPoint.minus(start_l3);
-  // dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  // dotProd = clamp(dotProd,-1,1);
-  // angleDiff = acos(dotProd);
-  // if (cross(startToGoal,startToEndEffector) < 0) 
-  //   a3 += angleDiff*0.6;
-  // else 
-  //   a3 -= angleDiff*0.6;
-  // /* Finger joint limits to 0 to 90 */
-  // if (a3 < -0.4) a3 = -0.4;
-  // if (a3 > 1.9708) a3 = 1.9708;
-  // fk(); //Update link positions with fk (e.g. end effector changed)
+  //Update finger joint
+  startToGoal = goal.minus(start_l3);
+  startToEndEffector = endPoint.minus(start_l3);
+  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
+  dotProd = clamp(dotProd,-1,1);
+  angleDiff = acos(dotProd);
+  if (cross(startToGoal,startToEndEffector) < 0)
+    a3 += angleDiff*0.6;
+  else
+    a3 -= angleDiff*0.6;
+  /* Finger joint limits to 90 degrees */
+  if (a3 < -1.5708) a3 = -1.5708;
+  if (a3 > 1.5708) a3 = 1.5708;
+  fk(); //Update link positions with fk (e.g. end effector changed)
+
+
 
   //Update wrist joint
   startToGoal = goal.minus(start_l2);
@@ -79,10 +73,8 @@ void solve(){
   else
     a2 -= angleDiff*0.6;
   /* Wrist joint limits to 90 degrees */
-  if (abs(a2) >= 1.5708){
-    if (a2 < 0) a2 = -1.5708;
-    else a2 = 1.5708;
-  }
+  if (a2 < -1.5708) a2 = -1.5708;
+  if (a2 > 1.5708) a2 = 1.5708;
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   
@@ -97,6 +89,9 @@ void solve(){
     a1 += angleDiff*0.5;
   else
     a1 -= angleDiff*0.5;
+  /* Elbow joint limits to 90 degrees */
+  if (a1 < -1.5708) a1 = -1.5708;
+  if (a1 > 1.5708) a1 = 1.5708;
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   
@@ -112,7 +107,7 @@ void solve(){
   else
     a0 -= angleDiff*0.4;
   /*Shoulder joint limits from 0 to 90 degrees*/
-  if (a0 < 0) a0 = 0;
+  if (a0 < -1.5708) a0 = -1.5708;
   if (a0 > 1.5708) a0 = 1.5708;
   fk(); //Update link positions with fk (e.g. end effector changed)
  
@@ -120,26 +115,25 @@ void solve(){
 }
 
 void fk(){
-  // arm[0].fk(root);
-  // IKChain[] temp = {arm[0]};
-  // for (int i = 1; i < arm.length; i++) {
-  //   arm[i].fk(temp);
-  //   temp = splice(temp,arm[i],i);
-  // }
+
   start_l1 = new Vec2(cos(a0)*l0,sin(a0)*l0).plus(root);
   start_l2 = new Vec2(cos(a0+a1)*l1,sin(a0+a1)*l1).plus(start_l1);
-  endPoint = new Vec2(cos(a0+a1+a2)*l2,sin(a0+a1+a2)*l2).plus(start_l2);
+  start_l3 = new Vec2(cos(a0+a1+a2)*l2,sin(a0+a1+a2)*l2).plus(start_l2);
+  endPoint = new Vec2(cos(a0+a1+a2+a3)*l3,sin(a0+a1+a2+a3)*l3).plus(start_l3);
 
 }
 
 float armW = 20;
+float bodyW = 80;
+float bodyH = 160;
+
 void draw(){
   fk();
   solve();
-  
   background(250,250,250);
   
-
+  // Makes the Arm
+  rectMode(CORNER);
   fill(255,219,172);
   pushMatrix();
   translate(root.x,root.y);
@@ -158,12 +152,20 @@ void draw(){
   rotate(a0+a1+a2);
   rect(0, -armW/2, l2, armW);
   popMatrix();
+
+  pushMatrix();
+  translate(start_l3.x,start_l3.y);
+  rotate(a0+a1+a2+a3);
+  rect(0, -armW/4, l3, armW/2);
+  popMatrix();
   
-  // pushMatrix();
-  // translate(start_l3.x,start_l3.y);
-  // rotate(a0+a1+a2+a3);
-  // rect(0, -armW/4, l3, armW/2);
-  // popMatrix();
+  // Makes the Body
+  rectMode(CENTER);
+  pushMatrix();
+  translate(width/2, height/2);
+  rect(0,0, bodyW, bodyH);
+  circle(0,-(30 + (bodyH/2)),60);
+  popMatrix();
 
 }
 
