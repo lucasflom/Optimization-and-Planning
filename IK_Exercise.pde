@@ -9,23 +9,6 @@ key points (e.g., center of mass and hand position) and let an optimizer find th
 all of the joints in the character's skelton. This is called Inverse Kinematics (IK). Here, we start 
 with some simple IK code and try to improve the results a bit to get better motion.
 
-TODO:
-Step 1. Change the joint lengths and colors to look more like a human arm. Try to match 
-        the length ratios of your own arm/hand, and try to match your own skin tone in the rendering.
-
-Step 2: Add an angle limit to the wrist joint, and limit it to be within +/- 90 degrees relative
-        to the lower arm.
-        -Be careful to put the joint limits for the wrist *before* you compute the new end effoctor
-         position for the next link in CCD
-
-Step 3: Add an angle limit to the shoulder joint to limit the joint to be between 0 and 90 degrees, 
-        this should stop the top of the arm from moving off screen.
-
-Step 4: Cap the acceleration of each joint so the joints can only update slowly. Try to tweak the 
-        acceleration cap to be different for each joint to get a good effect on the arm motion.
-
-Step 5: Try adding a 4th limb to the IK chain.
-
 
 CHALLENGE:
 
@@ -44,17 +27,23 @@ void setup(){
 //Root
 Vec2 root = new Vec2(0,0);
 
+// IKChain arm = new IKChain[3];
+
 //Upper Arm
-float l0 = 100; 
+float l0 = 135; 
 float a0 = 0.3; //Shoulder joint
+// arm[2] = new IKChain(l0, a0);
 
 //Lower Arm
-float l1 = 100;
+float l1 = 120;
 float a1 = 0.3; //Elbow joint
+// arm[1] = new IKChain(l1, a1);
 
 //Hand
-float l2 = 100;
+float l2 = 75;
 float a2 = 0.3; //Wrist joint
+// arm[0] = new IKChain(l2, a2);
+
 
 Vec2 start_l1,start_l2,endPoint;
 
@@ -64,6 +53,21 @@ void solve(){
   Vec2 startToGoal, startToEndEffector;
   float dotProd, angleDiff;
   
+  // //Update the finger joint
+  // startToGoal = goal.minus(start_l3);
+  // startToEndEffector = endPoint.minus(start_l3);
+  // dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
+  // dotProd = clamp(dotProd,-1,1);
+  // angleDiff = acos(dotProd);
+  // if (cross(startToGoal,startToEndEffector) < 0) 
+  //   a3 += angleDiff*0.6;
+  // else 
+  //   a3 -= angleDiff*0.6;
+  // /* Finger joint limits to 0 to 90 */
+  // if (a3 < -0.4) a3 = -0.4;
+  // if (a3 > 1.9708) a3 = 1.9708;
+  // fk(); //Update link positions with fk (e.g. end effector changed)
+
   //Update wrist joint
   startToGoal = goal.minus(start_l2);
   startToEndEffector = endPoint.minus(start_l2);
@@ -71,10 +75,14 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   if (cross(startToGoal,startToEndEffector) < 0)
-    a2 += angleDiff;
+    a2 += angleDiff*0.6;
   else
-    a2 -= angleDiff;
-  /*TODO: Wrist joint limits here*/
+    a2 -= angleDiff*0.6;
+  /* Wrist joint limits to 90 degrees */
+  if (abs(a2) >= 1.5708){
+    if (a2 < 0) a2 = -1.5708;
+    else a2 = 1.5708;
+  }
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   
@@ -86,9 +94,9 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   if (cross(startToGoal,startToEndEffector) < 0)
-    a1 += angleDiff;
+    a1 += angleDiff*0.5;
   else
-    a1 -= angleDiff;
+    a1 -= angleDiff*0.5;
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   
@@ -100,19 +108,28 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   if (cross(startToGoal,startToEndEffector) < 0)
-    a0 += angleDiff;
+    a0 += angleDiff*0.4;
   else
-    a0 -= angleDiff;
-  /*TODO: Shoulder joint limits here*/
+    a0 -= angleDiff*0.4;
+  /*Shoulder joint limits from 0 to 90 degrees*/
+  if (a0 < 0) a0 = 0;
+  if (a0 > 1.5708) a0 = 1.5708;
   fk(); //Update link positions with fk (e.g. end effector changed)
  
-  println("Angle 0:",a0,"Angle 1:",a1,"Angle 2:",a2);
+  // println("Angle 0:",a0,"Angle 1:",a1,"Angle 2:",a2);
 }
 
 void fk(){
+  // arm[0].fk(root);
+  // IKChain[] temp = {arm[0]};
+  // for (int i = 1; i < arm.length; i++) {
+  //   arm[i].fk(temp);
+  //   temp = splice(temp,arm[i],i);
+  // }
   start_l1 = new Vec2(cos(a0)*l0,sin(a0)*l0).plus(root);
   start_l2 = new Vec2(cos(a0+a1)*l1,sin(a0+a1)*l1).plus(start_l1);
   endPoint = new Vec2(cos(a0+a1+a2)*l2,sin(a0+a1+a2)*l2).plus(start_l2);
+
 }
 
 float armW = 20;
@@ -123,7 +140,7 @@ void draw(){
   background(250,250,250);
   
 
-  fill(200,0,180);
+  fill(255,219,172);
   pushMatrix();
   translate(root.x,root.y);
   rotate(a0);
@@ -142,116 +159,11 @@ void draw(){
   rect(0, -armW/2, l2, armW);
   popMatrix();
   
+  // pushMatrix();
+  // translate(start_l3.x,start_l3.y);
+  // rotate(a0+a1+a2+a3);
+  // rect(0, -armW/4, l3, armW/2);
+  // popMatrix();
+
 }
 
-
-
-//-----------------
-// Vector Library
-//-----------------
-
-//Vector Library
-//CSCI 5611 Vector 2 Library [Example]
-// Stephen J. Guy <sjguy@umn.edu>
-
-public class Vec2 {
-  public float x, y;
-  
-  public Vec2(float x, float y){
-    this.x = x;
-    this.y = y;
-  }
-  
-  public String toString(){
-    return "(" + x+ "," + y +")";
-  }
-  
-  public float length(){
-    return sqrt(x*x+y*y);
-  }
-  
-  public Vec2 plus(Vec2 rhs){
-    return new Vec2(x+rhs.x, y+rhs.y);
-  }
-  
-  public void add(Vec2 rhs){
-    x += rhs.x;
-    y += rhs.y;
-  }
-  
-  public Vec2 minus(Vec2 rhs){
-    return new Vec2(x-rhs.x, y-rhs.y);
-  }
-  
-  public void subtract(Vec2 rhs){
-    x -= rhs.x;
-    y -= rhs.y;
-  }
-  
-  public Vec2 times(float rhs){
-    return new Vec2(x*rhs, y*rhs);
-  }
-  
-  public void mul(float rhs){
-    x *= rhs;
-    y *= rhs;
-  }
-  
-  public void clampToLength(float maxL){
-    float magnitude = sqrt(x*x + y*y);
-    if (magnitude > maxL){
-      x *= maxL/magnitude;
-      y *= maxL/magnitude;
-    }
-  }
-  
-  public void setToLength(float newL){
-    float magnitude = sqrt(x*x + y*y);
-    x *= newL/magnitude;
-    y *= newL/magnitude;
-  }
-  
-  public void normalize(){
-    float magnitude = sqrt(x*x + y*y);
-    x /= magnitude;
-    y /= magnitude;
-  }
-  
-  public Vec2 normalized(){
-    float magnitude = sqrt(x*x + y*y);
-    return new Vec2(x/magnitude, y/magnitude);
-  }
-  
-  public float distanceTo(Vec2 rhs){
-    float dx = rhs.x - x;
-    float dy = rhs.y - y;
-    return sqrt(dx*dx + dy*dy);
-  }
-}
-
-Vec2 interpolate(Vec2 a, Vec2 b, float t){
-  return a.plus((b.minus(a)).times(t));
-}
-
-float interpolate(float a, float b, float t){
-  return a + ((b-a)*t);
-}
-
-float dot(Vec2 a, Vec2 b){
-  return a.x*b.x + a.y*b.y;
-}
-
-float cross(Vec2 a, Vec2 b){
-  return a.x*b.y - a.y*b.x;
-}
-
-
-Vec2 projAB(Vec2 a, Vec2 b){
-  return b.times(a.x*b.x + a.y*b.y);
-}
-
-float clamp(float f, float min, float max){
-  if (f < min) return min;
-  if (f > max) return max;
-  return f;
-}
