@@ -13,7 +13,7 @@ CHALLENGE:
 */
 
 void setup(){
-  size(640,480);
+  size(1280,960);
   root = new Vec2((bodyW/2) + (width/2), (height/2));
   surface.setTitle("Inverse Kinematics Part 1");
 }
@@ -52,9 +52,9 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   if (cross(startToGoal,startToEndEffector) < 0)
-    a3 += angleDiff*0.6;
+    a3 += angleDiff*0.4;
   else
-    a3 -= angleDiff*0.6;
+    a3 -= angleDiff*0.4;
   /* Finger joint limits to 90 degrees */
   if (a3 < -1.5708) a3 = -1.5708;
   if (a3 > 1.5708) a3 = 1.5708;
@@ -69,9 +69,9 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   if (cross(startToGoal,startToEndEffector) < 0)
-    a2 += angleDiff*0.6;
+    a2 += angleDiff*0.4;
   else
-    a2 -= angleDiff*0.6;
+    a2 -= angleDiff*0.4;
   /* Wrist joint limits to 90 degrees */
   if (a2 < -1.5708) a2 = -1.5708;
   if (a2 > 1.5708) a2 = 1.5708;
@@ -86,9 +86,9 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   if (cross(startToGoal,startToEndEffector) < 0)
-    a1 += angleDiff*0.5;
+    a1 += angleDiff*0.3;
   else
-    a1 -= angleDiff*0.5;
+    a1 -= angleDiff*0.3;
   /* Elbow joint limits to 90 degrees */
   if (a1 < -1.5708) a1 = -1.5708;
   if (a1 > 1.5708) a1 = 1.5708;
@@ -103,9 +103,9 @@ void solve(){
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   if (cross(startToGoal,startToEndEffector) < 0)
-    a0 += angleDiff*0.4;
+    a0 += angleDiff*0.2;
   else
-    a0 -= angleDiff*0.4;
+    a0 -= angleDiff*0.2;
   /*Shoulder joint limits from 0 to 90 degrees*/
   if (a0 < -1.5708) a0 = -1.5708;
   if (a0 > 1.5708) a0 = 1.5708;
