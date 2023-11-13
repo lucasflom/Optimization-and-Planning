@@ -143,5 +143,3 @@ void keyReleased()
 {
   camera.HandleKeyReleased();
 }
-
-

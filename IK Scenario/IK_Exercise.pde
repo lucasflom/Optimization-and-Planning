@@ -16,6 +16,7 @@ void setup(){
   size(1280,960);
   camera = new Camera();
   root = new Vec2((bodyW/2) + (width/2), (height/2));
+  move = false;
   surface.setTitle("Inverse Kinematics Part 1");
   // Set the Body
   body = new Box(width/2, height/2, bodyH, bodyW);
@@ -158,6 +159,9 @@ float bodyH = 160;
 Box body;
 Circle head;
 
+boolean move;
+
+
 void draw(){
   fk();
   solve();
@@ -208,4 +212,3 @@ void draw(){
   popMatrix();
   
 }
-
