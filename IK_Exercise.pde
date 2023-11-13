@@ -50,12 +50,14 @@ void solve(){
   float dotProd, angleDiff;
   
   //Update finger joint
+  float old_a3 = a3;
   startToGoal = goal.minus(start_l3);
   startToEndEffector = endPoint.minus(start_l3);
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
   do {
+    a3 = old_a3;
     if (cross(startToGoal,startToEndEffector) < 0)
       a3 += angleDiff*0.4;
     else
@@ -64,78 +66,82 @@ void solve(){
     if (a3 < -1.5708) a3 = -1.5708;
     if (a3 > 1.5708) a3 = 1.5708;
     fk(); //Update link positions with fk (e.g. end effector changed)
-    angleDiff *=.5;
-    println(head.isColliding(arm[3]));
+    angleDiff *= 0.5;
+    println(a3, old_a3);
+    
   } while (head.isColliding(arm[3]));
+  
 
 
 
 
   //Update wrist joint
+  float old_a2 = a2;
   startToGoal = goal.minus(start_l2);
   startToEndEffector = endPoint.minus(start_l2);
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a2 += angleDiff*0.4;
-  else
-    a2 -= angleDiff*0.4;
-  /* Wrist joint limits to 90 degrees */
-  if (a2 < -1.5708) a2 = -1.5708;
-  if (a2 > 1.5708) a2 = 1.5708;
-  fk(); //Update link positions with fk (e.g. end effector changed)
   
+  do {
+    a2 = old_a2;
+    if (cross(startToGoal,startToEndEffector) < 0)
+      a2 += angleDiff*0.4;
+    else
+      a2 -= angleDiff*0.4;
+    /* Wrist joint limits to 90 degrees */
+    if (a2 < -1.5708) a2 = -1.5708;
+    if (a2 > 1.5708) a2 = 1.5708;
+    fk(); //Update link positions with fk (e.g. end effector changed)
+    angleDiff *= 0.5;
+  } while (head.isColliding(arm[2]));
+  
+  
+    
   
   
   //Update elbow joint
+  float old_a1 = a1;
   startToGoal = goal.minus(start_l1);
   startToEndEffector = endPoint.minus(start_l1);
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a1 += angleDiff*0.3;
-  else
-    a1 -= angleDiff*0.3;
-  /* Elbow joint limits to 90 degrees */
-  if (a1 < -1.5708) a1 = -1.5708;
-  if (a1 > 1.5708) a1 = 1.5708;
-  fk(); //Update link positions with fk (e.g. end effector changed)
+  do {
+    a1 = old_a1;
+    if (cross(startToGoal,startToEndEffector) < 0)
+      a1 += angleDiff*0.3;
+    else
+      a1 -= angleDiff*0.3;
+    /* Elbow joint limits to 90 degrees */
+    if (a1 < -1.5708) a1 = -1.5708;
+    if (a1 > 1.5708) a1 = 1.5708;
+    fk(); //Update link positions with fk (e.g. end effector changed)
+    angleDiff *= 0.5;
+  } while (head.isColliding(arm[1]));
   
   
   //Update shoulder joint
+  float old_a0 = a0;
   startToGoal = goal.minus(root);
   if (startToGoal.length() < .0001) return;
   startToEndEffector = endPoint.minus(root);
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a0 += angleDiff*0.2;
-  else
-    a0 -= angleDiff*0.2;
-  /*Shoulder joint limits from 0 to 90 degrees*/
-  if (a0 < -1.5708) a0 = -1.5708;
-  if (a0 > 1.5708) a0 = 1.5708;
-  fk(); //Update link positions with fk (e.g. end effector changed)
+  do {
+    a0 = old_a0;
+    if (cross(startToGoal,startToEndEffector) < 0)
+      a0 += angleDiff*0.2;
+    else
+      a0 -= angleDiff*0.2;
+    /*Shoulder joint limits from 0 to 90 degrees*/
+    if (a0 < -1.5708) a0 = -1.5708;
+    if (a0 > 1.5708) a0 = 1.5708;
+    fk(); //Update link positions with fk (e.g. end effector changed)
+    angleDiff *= 0.5;
+  } while (head.isColliding(arm[0]));
  
-  // println("Angle 0:",a0,"Angle 1:",a1,"Angle 2:",a2);
-  // Check for collisions
-  for (int i = 3; i < arm.length; i++) {
-    if (head.isColliding(arm[i])){
-      Vec2 delta = arm[i].pos.minus(head.pos);
-      float dist = delta.length();
-      closest = head.closestPoint(arm[i]);
-      // Move out of collision
-      float overlap = (dist - head.r - (arm[i].pos.distanceTo(head.closestPoint(arm[i]))));
-      arm[i].pos.subtract(delta.normalized().times(overlap));
-      // println("Colliding with arm " + str(i));
-    }
-    if (arm[i].isColliding(body)){
-
-    }
-  }
 }
 Vec2 closest = new Vec2(0,0);
 void fk(){
@@ -161,8 +167,6 @@ void draw(){
   fk();
   solve();
   background(250,250,250);
-  fill(255,0,0);
-  circle(closest.x, closest.y, 10);
   // Makes the Arm
   rectMode(CORNER);
   fill(255,219,172);
@@ -202,5 +206,9 @@ void draw(){
   // popMatrix();
   rect(body.pos.x, body.pos.y, body.h, body.w);
   circle(head.pos.x, head.pos.y, head.r*2);
+  fill(255,0,0);
+  circle(arm[3].pos.x, arm[3].pos.y,10);
+  fill(0,255,0);
+  circle(closest.x, closest.y, 10);
 }
 
