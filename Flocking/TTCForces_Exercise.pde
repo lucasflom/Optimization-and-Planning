@@ -54,6 +54,8 @@ float k_goal = 1;  //TODO: Tune this parameter to agent stop naturally on their 
 float k_avoid = 1;
 float agentRad = 40;
 float goalSpeed = 100;
+Vec2 goalVel = new Vec2(10,10); 
+
 
 //The agent states
 Vec2[] agentPos = new Vec2[maxNumAgents];
@@ -74,6 +76,7 @@ void setup(){
   goalPos[0] = new Vec2(200,420);
   goalPos[1] = new Vec2(120,120);
   goalPos[2] = new Vec2(220,220);
+  for (int i = 0; i < maxNumAgents; i++) agentAcc[i] = new Vec2(0,0);
  
   //Set initial velocities to cary agents towards their goals
   for (int i = 0; i < numAgents; i++){
@@ -93,7 +96,11 @@ float computeTTC(Vec2 pos1, Vec2 vel1, float radius1, Vec2 pos2, Vec2 vel2, floa
 // and avoidance forces to anticipatory avoid collisions
 Vec2 computeAgentForces(int id){
   //TODO: Make this better
-  Vec2 acc = new Vec2(0,0);
+  goalVel.clampToLength(goalSpeed); //Clamps the goal velocity to the goal speed
+  println(goalVel);
+  Vec2 goal_force = goalVel.minus(agentVel[id]);
+  println(agentAcc[id]);
+  Vec2 acc = agentAcc[id].plus(goal_force);
  
   return acc;
 }
@@ -164,102 +171,4 @@ float rayCircleIntersectTime(Vec2 center, float r, Vec2 l_start, Vec2 l_dir){
   return -1; //We are not colliding, so there is no good t to return
 }
 
-//////////////////////
-//Vector Library
-//CSCI 5611 Vector 2 Library [Example]
-//////////////////////
 
-public class Vec2 {
-  public float x, y;
- 
-  public Vec2(float x, float y){
-    this.x = x;
-    this.y = y;
-  }
- 
-  public String toString(){
-    return "(" + x+ "," + y +")";
-  }
- 
-  public float length(){
-    return sqrt(x*x+y*y);
-  }
- 
-  public float lengthSqr(){
-    return x*x+y*y;
-  }
- 
-  public Vec2 plus(Vec2 rhs){
-    return new Vec2(x+rhs.x, y+rhs.y);
-  }
- 
-  public void add(Vec2 rhs){
-    x += rhs.x;
-    y += rhs.y;
-  }
- 
-  public Vec2 minus(Vec2 rhs){
-    return new Vec2(x-rhs.x, y-rhs.y);
-  }
- 
-  public void subtract(Vec2 rhs){
-    x -= rhs.x;
-    y -= rhs.y;
-  }
- 
-  public Vec2 times(float rhs){
-    return new Vec2(x*rhs, y*rhs);
-  }
- 
-  public void mul(float rhs){
-    x *= rhs;
-    y *= rhs;
-  }
- 
-  public void clampToLength(float maxL){
-    float magnitude = sqrt(x*x + y*y);
-    if (magnitude > maxL){
-      x *= maxL/magnitude;
-      y *= maxL/magnitude;
-    }
-  }
- 
-  public void setToLength(float newL){
-    float magnitude = sqrt(x*x + y*y);
-    x *= newL/magnitude;
-    y *= newL/magnitude;
-  }
- 
-  public void normalize(){
-    float magnitude = sqrt(x*x + y*y);
-    x /= magnitude;
-    y /= magnitude;
-  }
- 
-  public Vec2 normalized(){
-    float magnitude = sqrt(x*x + y*y);
-    return new Vec2(x/magnitude, y/magnitude);
-  }
- 
-  public float distanceTo(Vec2 rhs){
-    float dx = rhs.x - x;
-    float dy = rhs.y - y;
-    return sqrt(dx*dx + dy*dy);
-  }
-}
-
-Vec2 interpolate(Vec2 a, Vec2 b, float t){
-  return a.plus((b.minus(a)).times(t));
-}
-
-float interpolate(float a, float b, float t){
-  return a + ((b-a)*t);
-}
-
-float dot(Vec2 a, Vec2 b){
-  return a.x*b.x + a.y*b.y;
-}
-
-Vec2 projAB(Vec2 a, Vec2 b){
-  return b.times(a.x*b.x + a.y*b.y);
-}
