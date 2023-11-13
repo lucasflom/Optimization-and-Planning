@@ -14,6 +14,7 @@ CHALLENGE:
 
 void setup(){
   size(1280,960);
+  camera = new Camera();
   root = new Vec2((bodyW/2) + (width/2), (height/2));
   surface.setTitle("Inverse Kinematics Part 1");
   // Set the Body
@@ -48,7 +49,10 @@ void solve(){
   
   Vec2 startToGoal, startToEndEffector;
   float dotProd, angleDiff;
-  
+  if (mousePressed == true && (goal.distanceTo(root) < 50)) {
+    root = goal;
+    return ;
+  }
   //Update finger joint
   float old_a3 = a3;
   startToGoal = goal.minus(start_l3);
@@ -56,23 +60,18 @@ void solve(){
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
-  do {
+  // do {
     a3 = old_a3;
     if (cross(startToGoal,startToEndEffector) < 0)
       a3 += angleDiff*0.4;
     else
       a3 -= angleDiff*0.4;
     /* Finger joint limits to 90 degrees */
-    if (a3 < -1.5708) a3 = -1.5708;
+    if (a3 < -1.9708) a3 = -1.9708;
     if (a3 > 1.5708) a3 = 1.5708;
     fk(); //Update link positions with fk (e.g. end effector changed)
     angleDiff *= 0.5;
-    println(a3, old_a3);
-    
-  } while (head.isColliding(arm[3]));
-  
-
-
+  // } while (head.isColliding(arm[3]));
 
 
   //Update wrist joint
@@ -82,8 +81,7 @@ void solve(){
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
-  
-  do {
+  // do {
     a2 = old_a2;
     if (cross(startToGoal,startToEndEffector) < 0)
       a2 += angleDiff*0.4;
@@ -94,11 +92,7 @@ void solve(){
     if (a2 > 1.5708) a2 = 1.5708;
     fk(); //Update link positions with fk (e.g. end effector changed)
     angleDiff *= 0.5;
-  } while (head.isColliding(arm[2]));
-  
-  
-    
-  
+  // } while (head.isColliding(arm[2]));
   
   //Update elbow joint
   float old_a1 = a1;
@@ -107,19 +101,18 @@ void solve(){
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
-  do {
+  // do {
     a1 = old_a1;
     if (cross(startToGoal,startToEndEffector) < 0)
       a1 += angleDiff*0.3;
     else
       a1 -= angleDiff*0.3;
     /* Elbow joint limits to 90 degrees */
-    if (a1 < -1.5708) a1 = -1.5708;
+    if (a1 < -2.2708) a1 = -2.2708;
     if (a1 > 1.5708) a1 = 1.5708;
     fk(); //Update link positions with fk (e.g. end effector changed)
     angleDiff *= 0.5;
-  } while (head.isColliding(arm[1]));
-  
+  // } while (head.isColliding(arm[1]));
   
   //Update shoulder joint
   float old_a0 = a0;
@@ -129,7 +122,7 @@ void solve(){
   dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
   dotProd = clamp(dotProd,-1,1);
   angleDiff = acos(dotProd);
-  do {
+  // do {
     a0 = old_a0;
     if (cross(startToGoal,startToEndEffector) < 0)
       a0 += angleDiff*0.2;
@@ -140,7 +133,9 @@ void solve(){
     if (a0 > 1.5708) a0 = 1.5708;
     fk(); //Update link positions with fk (e.g. end effector changed)
     angleDiff *= 0.5;
-  } while (head.isColliding(arm[0]));
+  // } while (head.isColliding(arm[0]));
+
+ 
  
 }
 Vec2 closest = new Vec2(0,0);
@@ -167,6 +162,19 @@ void draw(){
   fk();
   solve();
   background(250,250,250);
+  noLights();
+
+  camera.Update(1.0/frameRate);
+  // Makes the Body
+  fill(255,219,172);
+  rectMode(CENTER);
+  rect(body.pos.x, body.pos.y, body.h, body.w);
+  circle(head.pos.x, head.pos.y, head.r*2);
+  fill(255,0,0);
+  circle(arm[3].pos.x, arm[3].pos.y,10);
+  fill(0,255,0);
+  circle(closest.x, closest.y, 10);
+
   // Makes the Arm
   rectMode(CORNER);
   fill(255,219,172);
@@ -174,7 +182,9 @@ void draw(){
   translate(root.x,root.y);
   rotate(a0);
   rect(0, -armW/2, l0, armW);
+  fill(255,0,0);
   circle(0, 0, 15);
+  fill(255,219,172);
   popMatrix();
   
   pushMatrix();
@@ -197,18 +207,5 @@ void draw(){
   rect(0, -armW/4, l3, armW/2);
   popMatrix();
   
-  // Makes the Body
-  rectMode(CENTER);
-  // pushMatrix();
-  // translate(width/2, height/2);
-  // rect(0,0, bodyW, bodyH);
-  // circle(0,-(30 + (bodyH/2)),60);
-  // popMatrix();
-  rect(body.pos.x, body.pos.y, body.h, body.w);
-  circle(head.pos.x, head.pos.y, head.r*2);
-  fill(255,0,0);
-  circle(arm[3].pos.x, arm[3].pos.y,10);
-  fill(0,255,0);
-  circle(closest.x, closest.y, 10);
 }
 
