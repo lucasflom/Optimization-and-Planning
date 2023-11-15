@@ -1,0 +1,1 @@
+4) Have the agent follow the path through the map to the end goal

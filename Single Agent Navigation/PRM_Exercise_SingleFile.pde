@@ -2,15 +2,10 @@
 //PRM Sample Code [Exercise]
 // Stephen J. Guy <sjguy@umn.edu>
 
-/*
-TODO:    
-Challenge:
-  2. Let the user use the mouse to click and drag the obstacles.
-*/
 
 
 //A list of circle obstacles
-static int numObstacles = 50;
+static int numObstacles = 25;
 Vec2 circlePos[] = new Vec2[numObstacles]; //Circle positions
 float circleRad[] = new float[numObstacles];  //Circle radii
 
@@ -19,13 +14,23 @@ float circleRad[] = new float[numObstacles];  //Circle radii
 // float boxW = 100;
 // float boxH = 250;
 //A list of box obstacles
-static int numObstaclesBox = 20;
+static int numObstaclesBox = 15;
 Vec2 boxTopLefts[] = new Vec2[numObstaclesBox];
 float boxWs[] = new float[numObstaclesBox];
 float boxHs[] = new float[numObstaclesBox];
 
-Vec2 startPos = new Vec2(100,500);
+static int numObstaclesMap = 6;
+Vec2 mapTopLefts[] = new Vec2[numObstaclesMap];
+float mapWs[] = new float[numObstaclesMap];
+float mapHs[] = new float[numObstaclesMap];
+
+Vec2 startPos = new Vec2(50,50);
 Vec2 goalPos = new Vec2(500,200);
+
+//Make the brave little agent
+Vec2 agentPos = new Vec2(50,50);
+float ang = 0.0;
+int location = 0;
 
 
 void placeRandomObstacles(){
@@ -44,9 +49,32 @@ void placeRandomObstacles(){
 int strokeWidth = 2;
 void setup(){
   size(1024,768);
-  placeRandomObstacles();
-  buildPRM(circlePos, circleRad, boxTopLefts, boxWs, boxHs);
-  runBFS(closestNode(startPos),closestNode(goalPos));
+  goalPos = new Vec2(width-50, height-50);
+  //Set the map
+  mapTopLefts[0] = new Vec2(0,0);
+  mapWs[0] = 10;
+  mapHs[0] = height;
+  mapTopLefts[1] = new Vec2(0,0);
+  mapWs[1] = width;
+  mapHs[1] = 10;
+  mapTopLefts[2] = new Vec2(width-10, 0);
+  mapWs[2] = 10;
+  mapHs[2] = height;
+  mapTopLefts[3] = new Vec2(0, height-10);
+  mapWs[3] = width;
+  mapHs[3] = 10;
+  mapTopLefts[4] = new Vec2((width/3)-10, 0);
+  mapWs[4] = 20;
+  mapHs[4] = 2*height/3;
+  mapTopLefts[5] = new Vec2((2*width/3)-10,(height/3));
+  mapWs[5] = 20;
+  mapHs[5] = 2*height/3;
+  do {
+    placeRandomObstacles();
+    buildPRM(circlePos, circleRad, boxTopLefts, boxWs, boxHs);
+    runBFS(closestNode(startPos),closestNode(goalPos));
+  } while (path.size() <= 1);
+  
 }
 
 void draw(){
@@ -59,6 +87,7 @@ void draw(){
   
   //Draw the circle obstacles
   for (int i = 0; i < numObstacles; i++){
+    fill(10*i, 55 + 7*i, 255 - 10*i);
     Vec2 c = circlePos[i];
     float r = circleRad[i];
     circle(c.x,c.y,r*2);
@@ -67,10 +96,16 @@ void draw(){
   //Draw the box obstacles
   fill(250,200,200);
   for (int i = 0; i < numObstaclesBox; i++){
+    fill(30 + 7*i,255-(15*i),15*i);
     rect(boxTopLefts[i].x, boxTopLefts[i].y, boxWs[i], boxHs[i]);
   }
   // rect(boxTopLeft.x, boxTopLeft.y, boxW, boxH);
-  
+  //Draw the base map
+  fill(0,0,0);
+  for (int i = 0; i < numObstaclesMap; i++){
+    rect(mapTopLefts[i].x, mapTopLefts[i].y, mapWs[i], mapHs[i]);
+  }
+
   //Draw PRM Nodes
   fill(0);
   for (int i = 0; i < numNodes; i++){
@@ -102,14 +137,67 @@ void draw(){
     int nextNode = path.get(i+1);
     line(nodePos[curNode].x,nodePos[curNode].y,nodePos[nextNode].x,nodePos[nextNode].y);
   }
+
+  //Draw the agent
+  stroke(0,0,0);
+  strokeWeight(1);
+  fill(47,32,66);
+  pushMatrix();
+  translate(agentPos.x, agentPos.y);
+  rotate(ang);
+  rect(0,-2.5,20,5);
+  stroke(255,255,255);
+  strokeWeight(3);
+  line(20,2.5,20,-2.5);
+  popMatrix();
+  move();
+  
+}
+
+void move(){
+  //Find the angleDiff
+  
+  // print(angleDiff);
+  
+  if (location < (path.size()-1)){
+    
+    float yDif = (nodePos[path.get(location+1)].y - agentPos.y);
+    float xDif = (nodePos[path.get(location+1)].x - agentPos.x);
+
+    float newAngle = atan2(yDif,xDif);
+    
+    println("Angle dif:", abs(ang-newAngle));
+    if (abs(ang - newAngle) <= 0.08){
+      Vec2 start = nodePos[path.get(location)];
+      Vec2 end = nodePos[path.get(location+1)];
+      Vec2 delta = end.minus(start);
+      Vec2 dir = delta.normalized();
+      agentPos.add(dir);
+      println(dir);
+      if (agentPos.distanceTo(end) < 4){
+          location += 1;
+      }
+    } else {
+      ang = lerp(ang, newAngle, 0.05);
+      // ang = newAngle;
+      // if (cross(agentPos, nodePos[path.get(location)]) < 0) ang -= newAngle*0.1;
+      // else ang += newAngle*0.01;
+    }
+    
+    
+  } else {
+    ang += 0.05;
+  }
   
 }
 
 void keyPressed(){
   if (key == 'r'){
-    placeRandomObstacles();
-    buildPRM(circlePos, circleRad, boxTopLefts, boxWs, boxHs);
-    runBFS(closestNode(startPos),closestNode(goalPos));
+    do {
+      placeRandomObstacles();
+      buildPRM(circlePos, circleRad, boxTopLefts, boxWs, boxHs);
+      runBFS(closestNode(startPos),closestNode(goalPos));
+    } while (path.size() <= 1);
   }
 }
 
@@ -140,13 +228,14 @@ void mousePressed(){
 
 //Returns true if the point is inside a box
 boolean pointInBox(Vec2 boxTopLeft, float boxW, float boxH, Vec2 pointPos){
-  if ((pointPos.x >= boxTopLeft.x - 2 && pointPos.x <= (boxTopLeft.x + boxW + 2)) && (pointPos.y >= boxTopLeft.y - 2 && pointPos.y <= (boxTopLeft.y + boxH + 2))) return true;
+  if ((pointPos.x >= boxTopLeft.x - 6 && pointPos.x <= (boxTopLeft.x + boxW + 6)) && (pointPos.y >= boxTopLeft.y - 6 && pointPos.y <= (boxTopLeft.y + boxH + 6))) return true;
   return false;
 }
 
 //Returns true if the point is inside a list of boxes
 boolean pointInBoxList(Vec2[] boxTopLefts, float[] boxWs, float[] boxHs, Vec2 pointPos){
-  for (int i = 0; i < numObstaclesBox; i++){
+  // TODO: Get lenght of array
+  for (int i = 0; i < boxTopLefts.length; i++){
     Vec2 boxTopLeft = boxTopLefts[i];
     float boxW = boxWs[i];
     float boxH = boxHs[i];
@@ -158,7 +247,7 @@ boolean pointInBoxList(Vec2[] boxTopLefts, float[] boxWs, float[] boxHs, Vec2 po
 //Returns true if the point is inside a circle
 boolean pointInCircle(Vec2 center, float r, Vec2 pointPos){
   float dist = pointPos.distanceTo(center);
-  if (dist < r+2){ //small safety factor
+  if (dist < r+6){ //small safety factor
     return true;
   }
   return false;
@@ -231,7 +320,7 @@ hitInfo rayBoxIntersect(Vec2 boxTopLeft, float boxW, float boxH, Vec2 ray_start,
 hitInfo rayBoxListIntersect(Vec2[] boxTopLefts, float[] boxWs, float[] boxHs, Vec2 ray_start, Vec2 ray_dir, float max_t){
   hitInfo hit = new hitInfo();
   hit.t = max_t;
-  for (int i = 0; i < numObstaclesBox; i++){
+  for (int i = 0; i < boxTopLefts.length; i++){
     hitInfo boxHit = rayBoxIntersect(boxTopLefts[i], boxWs[i], boxHs[i], ray_start, ray_dir, hit.t);
     if (boxHit.t > 0 && boxHit.t < hit.t){
       hit.hit = true;
@@ -320,14 +409,18 @@ Vec2[] nodePos = new Vec2[numNodes];
 
 //Generate non-colliding PRM nodes
 void generateRandomNodes(Vec2[] circleCenters, float[] circleRadii, Vec2[] boxTopLefts, float[] boxWs, float[] boxHs){
-  for (int i = 0; i < numNodes; i++){
+  nodePos[0] = startPos;
+  nodePos[1] = goalPos;
+  for (int i = 2; i < numNodes; i++){
     Vec2 randPos = new Vec2(random(width),random(height));
     boolean insideAnyCircle = pointInCircleList(circleCenters,circleRadii,randPos);
     boolean insideAnyBox = pointInBoxList(boxTopLefts, boxWs, boxHs, randPos);
-    while (insideAnyCircle || insideAnyBox){
+    boolean insideAnyMap = pointInBoxList(mapTopLefts, mapWs, mapHs, randPos);
+    while (insideAnyCircle || insideAnyBox || insideAnyMap){
       randPos = new Vec2(random(width),random(height));
       insideAnyCircle = pointInCircleList(circleCenters,circleRadii,randPos);
       insideAnyBox = pointInBoxList(boxTopLefts, boxWs, boxHs, randPos);
+      insideAnyMap = pointInBoxList(mapTopLefts, mapWs, mapHs, randPos);
     }
     nodePos[i] = randPos;
   }
@@ -344,7 +437,8 @@ void connectNeighbors(){
       float distBetween = nodePos[i].distanceTo(nodePos[j]);
       hitInfo circleListCheck = rayCircleListIntersect(circlePos, circleRad, nodePos[i], dir, distBetween);
       hitInfo boxListCheck = rayBoxListIntersect(boxTopLefts, boxWs, boxHs, nodePos[i], dir, distBetween);
-      if (!circleListCheck.hit && distBetween < 200 && !boxListCheck.hit){
+      hitInfo mapListCheck = rayBoxListIntersect(mapTopLefts, mapWs, mapHs, nodePos[i], dir, distBetween);
+      if (!circleListCheck.hit && distBetween < 200 && !boxListCheck.hit && !mapListCheck.hit){
         neighbors[i].add(j);
       }
     }
