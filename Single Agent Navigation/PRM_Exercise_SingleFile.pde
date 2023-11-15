@@ -107,22 +107,22 @@ void draw(){
   }
 
   //Draw PRM Nodes
-  fill(0);
-  for (int i = 0; i < numNodes; i++){
-    circle(nodePos[i].x,nodePos[i].y,5);
-  }
+  // fill(0);
+  // for (int i = 0; i < numNodes; i++){
+  //   circle(nodePos[i].x,nodePos[i].y,5);
+  // }
   
   //Draw graph
-  stroke(100,100,100);
-  strokeWeight(1);
-  for (int i = 0; i < numNodes; i++){
-    for (int j : neighbors[i]){
-      line(nodePos[i].x,nodePos[i].y,nodePos[j].x,nodePos[j].y);
-    }
-  }
+  // stroke(100,100,100);
+  // strokeWeight(1);
+  // for (int i = 0; i < numNodes; i++){
+  //   for (int j : neighbors[i]){
+  //     line(nodePos[i].x,nodePos[i].y,nodePos[j].x,nodePos[j].y);
+  //   }
+  // }
   
   //Draw Start and Goal
-  fill(20,60,250);
+  fill(20,250,60);
   circle(nodePos[startNode].x,nodePos[startNode].y,20);
   //circle(startPos.x,startPos.y,20);
   fill(250,30,50);
@@ -130,13 +130,13 @@ void draw(){
   //circle(goalPos.x,goalPos.y,20);
   
   //Draw Planned Path
-  stroke(20,255,40);
-  strokeWeight(5);
-  for (int i = 0; i < path.size()-1; i++){
-    int curNode = path.get(i);
-    int nextNode = path.get(i+1);
-    line(nodePos[curNode].x,nodePos[curNode].y,nodePos[nextNode].x,nodePos[nextNode].y);
-  }
+  // stroke(20,255,40);
+  // strokeWeight(5);
+  // for (int i = 0; i < path.size()-1; i++){
+  //   int curNode = path.get(i);
+  //   int nextNode = path.get(i+1);
+  //   line(nodePos[curNode].x,nodePos[curNode].y,nodePos[nextNode].x,nodePos[nextNode].y);
+  // }
 
   //Draw the agent
   stroke(0,0,0);
@@ -166,14 +166,14 @@ void move(){
 
     float newAngle = atan2(yDif,xDif);
     
-    println("Angle dif:", abs(ang-newAngle));
+    
     if (abs(ang - newAngle) <= 0.08){
       Vec2 start = nodePos[path.get(location)];
       Vec2 end = nodePos[path.get(location+1)];
       Vec2 delta = end.minus(start);
       Vec2 dir = delta.normalized();
       agentPos.add(dir);
-      println(dir);
+      
       if (agentPos.distanceTo(end) < 4){
           location += 1;
       }
